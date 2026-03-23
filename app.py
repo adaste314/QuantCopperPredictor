@@ -26,10 +26,16 @@ SUMMARY_PATH = DATA_DIR / "copper_model_summary.csv"
 # Notebook runner
 # ----------------------------
 def run_notebook(path):
+    # open the notebook file
     with open(path, "r", encoding="utf-8") as f:
         nb = nbformat.read(f, as_version=4)
 
-    client = NotebookClient(nb, timeout=600, kernel_name="python3")
+    # use the kernel metadata already stored in the notebook if possible
+    client = NotebookClient(
+        nb,
+        timeout=600
+    )
+
     client.execute()
 
 # ----------------------------
