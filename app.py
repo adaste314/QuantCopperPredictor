@@ -37,13 +37,7 @@ def run_notebook(path):
         resources={"metadata": {"path": os.getcwd()}},
     )
 
-    executed_nb = client.execute()
-
-    for cell in executed_nb.cells:
-        if cell.cell_type == "code" and "outputs" in cell:
-            for output in cell["outputs"]:
-                if output.output_type == "stream":
-                    st.text(output.text)
+    client.execute()
 
 # ----------------------------
 # Sidebar
