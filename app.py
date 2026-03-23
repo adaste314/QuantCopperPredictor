@@ -50,6 +50,7 @@ fred_api_key = st.sidebar.text_input(
     help="Paste your FRED API key here."
 )
 
+fast_load_button = st.sidebar.button("Load Existing Snapshot")
 run_button = st.sidebar.button("Refresh Data & Run Model")
 
 # ----------------------------
@@ -58,32 +59,53 @@ run_button = st.sidebar.button("Refresh Data & Run Model")
 if "data_loaded" not in st.session_state:
     st.session_state.data_loaded = False
 
+if "load_mode" not in st.session_state:
+    st.session_state.load_mode = None
 # ----------------------------
 # Run pipeline
 # ----------------------------
+if fast_load_button:
+    if PREDICTIONS_PATH.exists() and LATEST_PATH.exists() and SUMMARY_PATH.exists():
+        st.session_state.data_loaded = True
+        st.session_state.load_mode = "snapshot"
+        st.success("Loaded existing snapshot.")
+    else:
+        st.error("Snapshot files not found. Run the full pipeline first.")
+
 if run_button:
     if not fred_api_key:
         st.error("Please enter your FRED API key.")
     else:
         with st.spinner("Running data + model notebooks..."):
             try:
-                # pass API key to notebooks
                 os.environ["FRED_API_KEY"] = fred_api_key
+                # pass the API key to the notebooks through the environment
 
-                # run notebooks
                 run_notebook("data_scraper.ipynb")
+                # rebuild the data snapshot
+
                 run_notebook("predictor.ipynb")
+                # rerun the model and save fresh predictions
 
                 st.session_state.data_loaded = True
+                st.session_state.load_mode = "fresh"
 
                 st.success("Model updated successfully!")
 
             except Exception as e:
                 st.error(f"Error running notebooks: {e}")
-
 # ----------------------------
 # Load outputs
 # ----------------------------
+if (
+    not st.session_state.data_loaded
+    and PREDICTIONS_PATH.exists()
+    and LATEST_PATH.exists()
+    and SUMMARY_PATH.exists()
+):
+    st.session_state.data_loaded = True
+    st.session_state.load_mode = "snapshot"
+
 if not st.session_state.data_loaded:
     st.info("Enter your API key and click 'Refresh Data & Run Model'")
     st.stop()
@@ -106,6 +128,10 @@ summary_df = pd.read_csv(SUMMARY_PATH)
 latest = latest_df.iloc[0]
 summary = summary_df.iloc[0]
 
+if st.session_state.load_mode == "snapshot":
+    st.caption("Mode: loaded existing saved snapshot")
+elif st.session_state.load_mode == "fresh":
+    st.caption("Mode: freshly rebuilt data and reran model")
 # ----------------------------
 # Top metrics
 # ----------------------------
