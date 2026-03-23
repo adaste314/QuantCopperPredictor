@@ -33,7 +33,8 @@ def run_notebook(path):
     # use the kernel metadata already stored in the notebook if possible
     client = NotebookClient(
         nb,
-        timeout=600
+        timeout=600,
+        resources={"metadata": {"path": os.getcwd()}},
     )
 
     client.execute()

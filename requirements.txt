@@ -7,3 +7,6 @@ yfinance
 requests
 nbformat
 nbclient
+ipykernel
+jupyter_client
+jupyter_core
